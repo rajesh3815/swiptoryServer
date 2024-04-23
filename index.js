@@ -4,10 +4,12 @@ require("dotenv").config();
 const app = express();
 const mongoose = require("mongoose");
 const userRouter = require("./routers/auth.routes");
+const storyRouter = require("./routers/story.routes");
 const PORT = process.env.PORT || 4000;
 app.use(express.json());
 app.use(cors());
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/story", storyRouter);
 
 // for API health checking
 app.get("/api/health", (req, res) => {

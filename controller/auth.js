@@ -51,6 +51,7 @@ const loginUser = async (req, res) => {
         status:200,
         message: "successfully loged-in",
         token,
+        userId:isUserExist._id 
       });
     }
   } catch (error) {
