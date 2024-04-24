@@ -1,5 +1,5 @@
 const story = require("../model/story");
-
+const user = require("../model/user");
 const createStory = async (req, res) => {
   const slides = req.body;
   const userId = req.userId;
@@ -42,37 +42,35 @@ const updateStory = async (req, res) => {
         message: "slides not present",
       });
     }
-    isStory.slides=slides
-    await isStory.save()
-   res.send("story updated successfully")
-
+    isStory.slides = slides;
+    await isStory.save();
+    res.send("story updated successfully");
   } catch (error) {
     console.log("====================================");
-    console.log("error in story updation",error);
+    console.log("error in story updation", error);
     console.log("====================================");
   }
 };
 
-const getStorybyId= async(req,res)=>{
+const getStorybyId = async (req, res) => {
   try {
     const { storyId } = req.params;
     const isStory = await story.findOne({ _id: storyId });
-    if(!isStory){
+    if (!isStory) {
       return res.status(400).send({
         message: "Error storyid",
       });
     }
     res.send({
-      success:true,
-      story:isStory
-    })
+      success: true,
+      story: isStory,
+    });
   } catch (error) {
-    console.log('====================================');
-    console.log("error in story by id",error);
-    console.log('====================================');
+    console.log("====================================");
+    console.log("error in story by id", error);
+    console.log("====================================");
   }
-
-}
+};
 
 const getAll = async (req, res) => {
   const categoriesconsts = ["Food", "fitness", "fashion", "World", "medical"];
@@ -138,4 +136,77 @@ const getAll = async (req, res) => {
     console.log("last", error);
   }
 };
-module.exports = { createStory, getAll,updateStory ,getStorybyId};
+
+const likeStory = async (req, res) => {
+  const { storyId, userId } = req.params;
+  try {
+    const isStory = await story.findOne({ _id: storyId });
+    if (!isStory) {
+      return res.status(400).send({
+        message: "Error storyid",
+      });
+    }
+    let likearr = isStory.likes;
+    likearr.push({ userid: userId });
+    await story.updateOne({ _id: storyId }, { $set: { likes: likearr } });
+    res.status(200).send({ message: "Story liked successfully" });
+  } catch (error) {
+    res.status(500).send("error in story like ");
+    console.log("====================================");
+    console.log("error in story like by id:)", error);
+    console.log("====================================");
+  }
+};
+
+const bookmark = async (req, res) => {
+  try {
+    const data  = req.body;
+    console.log(req.body)
+    const userId = req.userId;
+    const isUser = await user.findOne({ _id: userId });
+    if (!isUser) {
+      return res.status(400).send("user doesnot exist");
+    }
+    let arr = isUser.bookmarks;
+    arr.push(data);
+    await user.updateOne({ _id: userId }, { $set: { bookmarks: arr } });
+    res.send({ message: "bookmarked Successfully" });
+  } catch (error) {
+    res.status(400).send({
+      message: "error in bookmark creation",
+    });
+    console.log("====================================");
+    console.log("error in story bookmark", error);
+    console.log("====================================");
+  }
+};
+const getBookmarks = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const isUser =await user.findOne({ _id: userId });
+    if (!isUser) {
+      return res.status(400).send("user doesnot exist");
+    }
+    const bookmarkData = isUser.bookmarks;
+    res.send({
+      bookmarks: bookmarkData,
+    });
+  } catch (error) {
+    res.status(400).send({
+      message: "error in bookmarks get",
+    });
+    console.log("====================================");
+    console.log("error in story bookmark", error);
+    console.log("====================================");
+  }
+};
+
+module.exports = {
+  createStory,
+  getAll,
+  updateStory,
+  getStorybyId,
+  likeStory,
+  bookmark,
+  getBookmarks
+};

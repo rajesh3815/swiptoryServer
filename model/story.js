@@ -30,15 +30,8 @@ const storySchema = new mongoose.Schema({
       userid: {
         type: mongoose.ObjectId,
       },
-      likes: {
-        type: Number,
-      },
     },
   ],
-  isEditable: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 const story = mongoose.model("story", storySchema);
