@@ -6,7 +6,10 @@ require("dotenv").config();
 const registerUser = async (req, res) => {
   const { name, password } = req.body;
   if (!name || !password) {
-    return res.status(400).send("All fields are require");
+    return res.status(400).res.send({
+      message: "All fields are requred",
+      status: 0,
+    });
   }
   const encryptedPassword = await bcrypt.hash(password, 10);
   try {
@@ -15,9 +18,15 @@ const registerUser = async (req, res) => {
       password: encryptedPassword,
     });
     await newUser.save();
-    res.send("user Created Successfully");
+    res.send({
+      message: "user Created Successfully",
+      status: 1,
+    });
   } catch (error) {
-    res.status(400).send("Error in user Registration");
+    res.status(400).res.send({
+      message: "Errors",
+      status: 0,
+    });
     console.log("error from userRegistration:)", error);
   }
 };
@@ -48,18 +57,18 @@ const loginUser = async (req, res) => {
       );
       return res.send({
         name,
-        status:200,
+        status: 200,
         message: "successfully loged-in",
         token,
-        userId:isUserExist._id 
+        userId: isUserExist._id,
       });
     }
   } catch (error) {
     res.status(400).send({
       message: "Error in login",
-      status:300,
+      status: 300,
     });
-    console.log("Error from userLogin:)",error);
+    console.log("Error from userLogin:)", error);
   }
 };
 

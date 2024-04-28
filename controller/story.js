@@ -1,3 +1,4 @@
+const { verifyStory } = require("../middleware/VerifyToken");
 const story = require("../model/story");
 const user = require("../model/user");
 const createStory = async (req, res) => {
@@ -64,6 +65,7 @@ const getStorybyId = async (req, res) => {
     res.send({
       success: true,
       story: isStory,
+      likes: isStory?.likes?.length,
     });
   } catch (error) {
     console.log("====================================");
@@ -73,18 +75,15 @@ const getStorybyId = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
+  const token = req.headers["authorization"];
+  const userId = verifyStory(token);
   const categoriesconsts = ["Food", "fitness", "fashion", "World", "medical"];
-  const categories = req.query.categories;
+  const categories = req.query.categories; //this is the extra
   const page = parseInt(req.query.page) || 1;
   let cat = req.query.cat;
-  // console.log(cat);
-  //removing unnessary things
-  // cat=cat.replace(/[\[\]\"']/g, "")
-  // console.log(cat);
   let categoryFilter;
   let filter = {};
   let limit = 4 * page;
-  // const token = req.headers["authorization"];
   if (categories) {
     categoryFilter = categories.replace(/[\[\]\"']/g, "").split(",");
     filter = { "slides.category": { $in: categoryFilter } };
@@ -92,8 +91,8 @@ const getAll = async (req, res) => {
   //find for all categories just group them into category wise
   try {
     if (cat && cat.toLowerCase() === "all") {
-      console.log("ss", cat);
       const groupStories = {};
+      const storyLen = {};
       for (const item of categoriesconsts) {
         const stories = await story
           .find({
@@ -101,9 +100,17 @@ const getAll = async (req, res) => {
           })
           .limit(limit);
         groupStories[item] = stories;
+
+        const slen = await story.find({
+          slides: { $elemMatch: { category: item } },
+        });
+        storyLen[item] = slen.length;
       }
+      const myStory = await story.find({ userId: userId });
+      groupStories["myStory"] = myStory;
       return res.send({
         storyData: groupStories,
+        storyLength: storyLen,
       });
     }
   } catch (error) {
@@ -147,7 +154,13 @@ const likeStory = async (req, res) => {
       });
     }
     let likearr = isStory.likes;
-    likearr.push({ userid: userId });
+    let flg = likearr.includes(userId);
+    if (flg) {
+      likearr = likearr.filter((item) => item !== userId);
+    } else {
+      likearr.push(userId);
+    }
+
     await story.updateOne({ _id: storyId }, { $set: { likes: likearr } });
     res.status(200).send({ message: "Story liked successfully" });
   } catch (error) {
@@ -160,15 +173,25 @@ const likeStory = async (req, res) => {
 
 const bookmark = async (req, res) => {
   try {
-    const data  = req.body;
-    console.log(req.body)
+    const data = req.body;
     const userId = req.userId;
     const isUser = await user.findOne({ _id: userId });
     if (!isUser) {
       return res.status(400).send("user doesnot exist");
     }
     let arr = isUser.bookmarks;
-    arr.push(data);
+    let flg = false;
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i]._id === data._id) {
+        flg = true;
+      }
+    }
+    if (flg) {
+      arr = arr.filter((item) => item._id !== data._id);
+    } else {
+      arr.push(data);
+    }
+
     await user.updateOne({ _id: userId }, { $set: { bookmarks: arr } });
     res.send({ message: "bookmarked Successfully" });
   } catch (error) {
@@ -180,10 +203,11 @@ const bookmark = async (req, res) => {
     console.log("====================================");
   }
 };
+
 const getBookmarks = async (req, res) => {
   try {
     const userId = req.userId;
-    const isUser =await user.findOne({ _id: userId });
+    const isUser = await user.findOne({ _id: userId });
     if (!isUser) {
       return res.status(400).send("user doesnot exist");
     }
@@ -208,5 +232,5 @@ module.exports = {
   getStorybyId,
   likeStory,
   bookmark,
-  getBookmarks
+  getBookmarks,
 };

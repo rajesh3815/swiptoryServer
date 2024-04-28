@@ -20,5 +20,12 @@ const verifyToken = (req, res, next) => {
     });
   }
 };
+const verifyStory = (tokenheader) => {
+  if (!tokenheader) {
+    return;
+  }
+  const decode = jwt.verify(tokenheader, process.env.SECRET_KEY);
+  return decode.userId;
+};
 
-module.exports = { verifyToken };
+module.exports = { verifyToken ,verifyStory};

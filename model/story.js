@@ -25,12 +25,7 @@ const storySchema = new mongoose.Schema({
       },
     },
   ],
-  likes: [
-    {
-      userid: {
-        type: mongoose.ObjectId,
-      },
-    },
+  likes: [   
   ],
 });
 
