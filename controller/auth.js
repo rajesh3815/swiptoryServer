@@ -6,9 +6,16 @@ require("dotenv").config();
 const registerUser = async (req, res) => {
   const { name, password } = req.body;
   if (!name || !password) {
-    return res.status(400).res.send({
+    return res.status(400).send({
       message: "All fields are requred",
       status: 0,
+    });
+  }
+  const isExist = await user.findOne({ name});
+  if (isExist) {
+    return res.send({
+      message: "user Already exist",
+      status: 2,
     });
   }
   const encryptedPassword = await bcrypt.hash(password, 10);
